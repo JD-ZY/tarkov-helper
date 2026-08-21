@@ -19,6 +19,10 @@ public partial class MainWindow : Window
     private readonly JsonTarkovDevClient _itemNamesClient = new();
     private readonly GameLogWatcher _logWatcher = new();
     private readonly AppSettings _settings;
+    private readonly UpdateChecker _updateChecker = new("JD-ZY", "tarkov-helper");
+    private readonly SelfUpdater _selfUpdater = new();
+    private UpdateInfo? _pendingUpdate;
+    private string? _pendingUpdateZipPath;
     private ScreenshotPositionWatcher _positionWatcher = new();
     private readonly string _appDataFolder;
     private List<QuestTask> _allTasks = new();
@@ -86,6 +90,7 @@ public partial class MainWindow : Window
         Loaded += async (_, _) => await LoadAmmoAsync(forceRefresh: false);
         Loaded += async (_, _) => await LoadItemNamesAsync();
         Loaded += (_, _) => StartItemLookupHotkey();
+        Loaded += async (_, _) => await CheckForUpdatesAsync();
         Closed += (_, _) => _logWatcher.Dispose();
         Closed += (_, _) => _positionWatcher.Dispose();
         Closed += (_, _) => _itemLookupInputHook?.Dispose();
@@ -933,6 +938,58 @@ public partial class MainWindow : Window
         {
             RefreshButton.IsEnabled = true;
         }
+    }
+
+    // Runs once per launch, well after the window is already usable -
+    // failure here (network down, GitHub unreachable, no releases yet)
+    // must never block or interrupt normal startup, which is why
+    // UpdateChecker itself swallows all of that and just returns null.
+    private async Task CheckForUpdatesAsync()
+    {
+        var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0, 0);
+        var update = await _updateChecker.CheckForUpdateAsync(currentVersion);
+        if (update is null)
+        {
+            return;
+        }
+
+        _pendingUpdate = update;
+        UpdateBannerText.Text = $"Version {update.Version} is available (you have {currentVersion}).";
+        UpdateBanner.Visibility = Visibility.Visible;
+        UpdateProgressText.Text = "Downloading...";
+
+        try
+        {
+            var zipPath = Path.Combine(Path.GetTempPath(), $"TarkovHelperUpdate_{update.Version}.zip");
+            await _updateChecker.DownloadUpdateZipAsync(update.ZipDownloadUrl, zipPath);
+            _pendingUpdateZipPath = zipPath;
+
+            UpdateProgressText.Text = "";
+            UpdateRestartButton.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex)
+        {
+            // Downloaded update isn't usable - fall back to pointing the
+            // user at the release page rather than leaving a broken
+            // "Restart to update" button that would fail silently.
+            UpdateProgressText.Text = $"Download failed: {ex.Message}";
+            UpdateBannerText.Text = $"Version {update.Version} is available - see {update.ReleaseUrl}";
+        }
+    }
+
+    private void OnUpdateRestartClick(object sender, RoutedEventArgs e)
+    {
+        if (_pendingUpdateZipPath is null)
+        {
+            return;
+        }
+
+        // The published app is a flat self-contained folder (see
+        // RELEASING.md) - AppContext.BaseDirectory is that folder for both
+        // `dotnet run` (bin\Debug\...) and the real published exe, and
+        // ApplyUpdateAndRestart never returns on success (Environment.Exit).
+        var installDir = AppContext.BaseDirectory;
+        _selfUpdater.ApplyUpdateAndRestart(_pendingUpdateZipPath, installDir, "TarkovHelper.App.exe");
     }
 
     private void ApplyFilter()

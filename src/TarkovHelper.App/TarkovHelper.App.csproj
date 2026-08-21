@@ -22,6 +22,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- Bump on every release - UpdateChecker compares this against GitHub
+         releases' tag names (vX.Y.Z) to decide whether an update is available. -->
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

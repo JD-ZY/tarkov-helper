@@ -10,10 +10,23 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+        <!-- Hidden until UpdateChecker finds a newer GitHub release than
+             this build's own Version - see MainWindow.CheckForUpdatesAsync. -->
+        <Border x:Name="UpdateBanner" Grid.Row="0" Background="#2a3a4a" BorderBrush="#4a6a8a"
+                BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,10" Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="UpdateBannerText" Foreground="White" VerticalAlignment="Center" />
+                <Button x:Name="UpdateRestartButton" Content="Restart to update" Margin="15,0,0,0"
+                        Click="OnUpdateRestartClick" Visibility="Collapsed" />
+                <TextBlock x:Name="UpdateProgressText" Foreground="#a0c0e0" Margin="15,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Tarkov Helper" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
             <TextBlock x:Name="StatusText" Text="" Margin="15,0,0,0" VerticalAlignment="Center" Foreground="Gray"
                        MaxWidth="260" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
@@ -48,7 +61,7 @@
              instead of appending to it). This app already filters
              ItemsSource itself on every text change, so WPF's competing
              built-in search must be off, not on. -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
             <TextBlock Text="Look up an item:" VerticalAlignment="Center" Margin="0,0,5,0" />
             <ComboBox x:Name="ItemSearchComboBox" Width="300" IsEditable="True" IsTextSearchEnabled="False"
                       StaysOpenOnEdit="True" TextBoxBase.TextChanged="OnItemSearchTextChanged"
@@ -56,7 +69,7 @@
                       DisplayMemberPath="Name" ToolTip="Type an item name, then pick it from the dropdown to see prices and hideout needs" />
         </StackPanel>
 
-        <TabControl x:Name="MainTabControl" Grid.Row="2">
+        <TabControl x:Name="MainTabControl" Grid.Row="3">
             <TabItem x:Name="QuestsTabItem" Header="Quests &amp; Item Lookup">
                 <Grid Margin="0,10,0,0">
                     <Grid.RowDefinitions>
