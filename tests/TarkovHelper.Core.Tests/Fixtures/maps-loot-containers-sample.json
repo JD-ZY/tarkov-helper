@@ -1,0 +1,55 @@
+{
+  "data": {
+    "lootContainers": {
+      "578f8782245977354405a1e3": {
+        "id": "578f8782245977354405a1e3",
+        "name": "578f8782245977354405a1e3 Name",
+        "normalizedName": "safe"
+      },
+      "578f87a3245977356274f2cb": {
+        "id": "578f87a3245977356274f2cb",
+        "name": "578f87a3245977356274f2cb Name",
+        "normalizedName": "duffle-bag"
+      },
+      "578f8778245977358849a9b5": {
+        "id": "578f8778245977358849a9b5",
+        "name": "578f8778245977358849a9b5 Name",
+        "normalizedName": "jacket"
+      },
+      "578f87ad245977356274f2cc": {
+        "id": "578f87ad245977356274f2cc",
+        "name": "578f87ad245977356274f2cc Name",
+        "normalizedName": "wooden-crate"
+      }
+    },
+    "maps": {
+      "56f40101d2720b2a4d8b45d6": {
+        "id": "56f40101d2720b2a4d8b45d6",
+        "normalizedName": "customs",
+        "lootContainers": [
+          {
+            "lootContainer": "578f87ad245977356274f2cc",
+            "position": { "x": 52.3645477, "y": 5.673, "z": -45.96205 }
+          },
+          {
+            "lootContainer": "578f87a3245977356274f2cb",
+            "position": { "x": 63.2097, "y": 7.71548843, "z": -65.16994 }
+          },
+          {
+            "lootContainer": "578f8778245977358849a9b5",
+            "position": { "x": 90.188, "y": 2.77899933, "z": -60.4390068 }
+          },
+          {
+            "lootContainer": "578f8782245977354405a1e3",
+            "position": { "x": 226.868713, "y": 0.337000132, "z": 136.745 }
+          }
+        ]
+      },
+      "55f2d3fd4bdc2d5f408b4567": {
+        "id": "55f2d3fd4bdc2d5f408b4567",
+        "normalizedName": "factory",
+        "lootContainers": []
+      }
+    }
+  }
+}

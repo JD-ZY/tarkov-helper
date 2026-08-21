@@ -1,0 +1,22 @@
+{
+  "data": {
+    "items": {
+      "5447a9cd4bdc2dbd208b4567": {
+        "id": "5447a9cd4bdc2dbd208b4567",
+        "name": "5447a9cd4bdc2dbd208b4567 Name",
+        "avg24hPrice": 43360,
+        "sellToTrader": [
+          { "trader": "54cb50c76803fa8b248b4571", "price": 7358, "priceRUB": 7358, "currency": "RUB" },
+          { "trader": "579dc571d53a0658a154fbec", "price": 4415, "priceRUB": 4415, "currency": "RUB" },
+          { "trader": "5935c25fb3acc3127c3d8cd9", "price": 55, "priceRUB": 6622, "currency": "USD" }
+        ]
+      },
+      "5734758f24597738025ee253": {
+        "id": "5734758f24597738025ee253",
+        "name": "5734758f24597738025ee253 Name",
+        "avg24hPrice": null,
+        "sellToTrader": []
+      }
+    }
+  }
+}

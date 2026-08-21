@@ -1,0 +1,189 @@
+<Window x:Class="TarkovHelper.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TarkovHelper.App"
+        mc:Ignorable="d"
+        Title="Tarkov Helper" Height="650" Width="900">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Tarkov Helper" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+            <TextBlock x:Name="StatusText" Text="" Margin="15,0,0,0" VerticalAlignment="Center" Foreground="Gray"
+                       MaxWidth="260" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+            <Border Background="#222" CornerRadius="4" Margin="15,0,0,0" Padding="8,3">
+                <TextBlock x:Name="RaidStatusText" Text="Raid tracking: not started" Foreground="LightGray" />
+            </Border>
+            <Border Background="#222" CornerRadius="4" Margin="8,0,0,0" Padding="8,3">
+                <TextBlock x:Name="PositionText" Text="Position: no screenshot yet" Foreground="LightGray" />
+            </Border>
+            <Button x:Name="ChooseScreenshotsFolderButton" Content="Choose screenshots folder..." Margin="8,0,0,0"
+                    Click="OnChooseScreenshotsFolderClick" Visibility="Collapsed" />
+            <CheckBox x:Name="AlwaysOnTopCheckBox" Content="Always on top" Margin="15,0,0,0"
+                      VerticalAlignment="Center" Checked="OnAlwaysOnTopChanged" Unchecked="OnAlwaysOnTopChanged" />
+            <Button x:Name="ItemLookupHotkeyButton" Content="Item lookup: Alt+Left Click" Margin="15,0,0,0"
+                    Click="OnChangeItemLookupHotkeyClick" ToolTip="Click, then press the key or mouse button you want to use for item lookup" />
+            <Button x:Name="OpenMapButton" Content="Open map" Margin="15,0,0,0" Click="OnOpenMapClick" />
+        </StackPanel>
+
+        <!-- Manual alternative to the Alt+Click hover hotkey - type an
+             item name, pick a match from the dropdown, and get the exact
+             same price/hideout-need result the hotkey produces (see
+             ShowItemLookupResult, shared by both paths).
+
+             Real bug this fixes: IsTextSearchEnabled="True" turns on
+             ComboBox's OWN built-in type-ahead, which competes with the
+             hand-rolled filtering in OnItemSearchTextChanged below -
+             every keystroke, WPF's built-in search jumped the dropdown
+             to/selected whatever item's DisplayMemberPath text happened
+             to start matching so far, which visibly overwrote the text
+             the user was still typing after only 2 characters (confirmed
+             directly: typing a 3rd character replaced the box's content
+             instead of appending to it). This app already filters
+             ItemsSource itself on every text change, so WPF's competing
+             built-in search must be off, not on. -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Look up an item:" VerticalAlignment="Center" Margin="0,0,5,0" />
+            <ComboBox x:Name="ItemSearchComboBox" Width="300" IsEditable="True" IsTextSearchEnabled="False"
+                      StaysOpenOnEdit="True" TextBoxBase.TextChanged="OnItemSearchTextChanged"
+                      SelectionChanged="OnItemSearchSelectionChanged"
+                      DisplayMemberPath="Name" ToolTip="Type an item name, then pick it from the dropdown to see prices and hideout needs" />
+        </StackPanel>
+
+        <TabControl x:Name="MainTabControl" Grid.Row="2">
+            <TabItem x:Name="QuestsTabItem" Header="Quests &amp; Item Lookup">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Search:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBox x:Name="SearchBox" Width="220" TextChanged="OnFilterChanged" />
+                        <CheckBox x:Name="ItemLookupModeCheckBox" Content="Search as item (what quests need this)" Margin="10,0,0,0"
+                                  VerticalAlignment="Center" Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
+                        <CheckBox x:Name="ActiveOnlyCheckBox" Content="Active quests only" Margin="15,0,0,0"
+                                  VerticalAlignment="Center" IsChecked="True" Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
+                        <CheckBox x:Name="AvailableOnlyCheckBox" Content="Available only" Margin="15,0,0,0"
+                                  VerticalAlignment="Center" IsChecked="False" Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
+                        <CheckBox x:Name="HideCompleteCheckBox" Content="Hide completed" Margin="15,0,0,0"
+                                  VerticalAlignment="Center" IsChecked="True" Checked="OnFilterChanged" Unchecked="OnFilterChanged" />
+                        <Button x:Name="RefreshButton" Content="Refresh from tarkov.dev" Margin="15,0,0,0" Click="OnRefreshClick" />
+                    </StackPanel>
+
+                    <!-- Only visible right after an item-lookup hotkey match - a
+                         prominent, high-contrast banner (unlike the small gray
+                         top-bar StatusText) so a price/hideout-need result is
+                         easy to actually notice, not something you have to
+                         hunt for. -->
+                    <Border x:Name="ItemLookupResultBanner" Grid.Row="1" Background="#2a3a2a" BorderBrush="#4a7a4a"
+                            BorderThickness="1" CornerRadius="4" Padding="10,6" Margin="0,0,0,10" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock x:Name="ItemLookupResultName" FontSize="15" FontWeight="Bold" Foreground="White" />
+                            <TextBlock x:Name="ItemLookupResultPrices" Foreground="#a0e0a0" Margin="0,2,0,0" />
+                            <TextBlock x:Name="ItemLookupResultHideout" Foreground="LightGray" Margin="0,2,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <DataGrid x:Name="QuestGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="Done" Binding="{Binding IsComplete, UpdateSourceTrigger=PropertyChanged}" Width="50" />
+                            <DataGridTextColumn Header="Quest" Binding="{Binding Name}" Width="Auto" MaxWidth="260" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Trader" Binding="{Binding TraderName}" Width="Auto" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Map" Binding="{Binding MapName}" Width="Auto" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Min Lvl" Binding="{Binding MinPlayerLevel}" Width="Auto" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Items Needed" Binding="{Binding ItemsNeeded}" Width="*" IsReadOnly="True" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock x:Name="CountText" Grid.Row="3" Margin="0,10,0,0" Foreground="Gray" />
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Ammo">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Search:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBox x:Name="AmmoSearchBox" Width="220" TextChanged="OnAmmoSearchTextChanged"
+                                 ToolTip="Filter by round name or caliber" />
+                        <TextBlock x:Name="AmmoStatusText" Text="" Margin="15,0,0,0" VerticalAlignment="Center" Foreground="Gray" />
+                        <Button x:Name="RefreshAmmoButton" Content="Refresh from tarkov.dev" Margin="15,0,0,0" Click="OnRefreshAmmoClick" />
+                    </StackPanel>
+
+                    <DataGrid x:Name="AmmoGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="Auto" MaxWidth="220" />
+                            <DataGridTextColumn Header="Damage" Binding="{Binding Damage}" Width="Auto" />
+                            <DataGridTextColumn Header="Armor Dmg" Binding="{Binding ArmorDamage}" Width="Auto" />
+                            <DataGridTextColumn Header="Penetration" Binding="{Binding PenetrationPower}" Width="Auto" />
+                            <DataGridTextColumn Header="Velocity (m/s)" Binding="{Binding InitialSpeed}" Width="Auto" />
+                            <DataGridTextColumn Header="Tracer" Binding="{Binding Tracer}" Width="Auto" />
+                            <DataGridTextColumn Header="Trader Availability" Binding="{Binding TraderOffers}" Width="*" />
+                        </DataGrid.Columns>
+                        <DataGrid.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.ContainerStyle>
+                                    <Style TargetType="{x:Type GroupItem}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                    <Expander IsExpanded="True" Background="#222" Foreground="White" Padding="4,2">
+                                                        <Expander.Header>
+                                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="White" />
+                                                        </Expander.Header>
+                                                        <ItemsPresenter />
+                                                    </Expander>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </GroupStyle.ContainerStyle>
+                            </GroupStyle>
+                        </DataGrid.GroupStyle>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Hideout">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock x:Name="HideoutStatusText" Text="" VerticalAlignment="Center" Foreground="Gray" />
+                        <Button x:Name="RefreshHideoutButton" Content="Refresh from tarkov.dev" Margin="15,0,0,0" Click="OnRefreshHideoutClick" />
+                    </StackPanel>
+
+                    <DataGrid x:Name="HideoutGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single"
+                              CellEditEnding="OnHideoutCellEditEnding">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Station" Binding="{Binding Name}" Width="160" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Current Level" Binding="{Binding CurrentLevel, UpdateSourceTrigger=LostFocus}" Width="100" />
+                            <DataGridTextColumn Header="Progress" Binding="{Binding NextLevelStatus}" Width="130" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Next Level Requires" Binding="{Binding NextLevelRequirements}" Width="*" IsReadOnly="True" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

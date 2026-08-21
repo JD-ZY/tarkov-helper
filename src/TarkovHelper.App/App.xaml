@@ -1,0 +1,79 @@
+﻿<Application x:Class="TarkovHelper.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TarkovHelper.App"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <!-- Real bug this fixes: on a system with Windows dark mode
+             enabled, WPF's default DataGrid cell/row template inherits a
+             light (white) SystemColors.WindowTextBrush for its text, but
+             the row BACKGROUND stays the default white regardless -
+             except for the SELECTED row, which gets a blue highlight the
+             white text actually shows up against. The net effect,
+             confirmed directly from a real screenshot: every unselected
+             row in every DataGrid in the app renders with invisible
+             white-on-white text, and only the one selected/highlighted
+             row is readable. This app never opted into dark styling
+             anywhere (App.xaml had no resources at all before this fix),
+             so it was unintentionally inheriting a dark-mode text color
+             without a matching dark background - explicit colors here
+             remove the OS theme as a variable entirely, the same fix
+             applied uniformly to every DataGrid (Quests, Hideout, Ammo)
+             rather than patching each one separately. -->
+        <Style TargetType="DataGridCell">
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Background" Value="White" />
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="White" />
+                    <Setter Property="Background" Value="#3399FF" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <!-- Real bug this fixes: the original version of this style only
+             set Foreground/Background, with no border/padding - column
+             headers rendered as one flat, undivided strip of text with no
+             visual separation between columns at all (confirmed directly
+             from a real screenshot: "DamageArmor DmgPenetrationVelocity
+             (m/s)Tracer" ran together illegibly). A right-edge border plus
+             horizontal padding restores the column-separator look a
+             DataGrid header is expected to have. -->
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Background" Value="#F0F0F0" />
+            <Setter Property="BorderBrush" Value="#B0B0B0" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+            <Setter Property="Padding" Value="6,4" />
+        </Style>
+        <Style TargetType="DataGridRowHeader">
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Background" Value="#F0F0F0" />
+            <Setter Property="BorderBrush" Value="#B0B0B0" />
+            <Setter Property="BorderThickness" Value="0,0,1,1" />
+        </Style>
+
+        <!-- Same dark-mode-inherited-text-color risk as DataGrid above,
+             applied proactively here (not from a reported bug) since the
+             new item-search ComboBox's dropdown/edit box is exactly the
+             same shape of control - unthemed WPF default text color with
+             no matching background guarantee. -->
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Background" Value="White" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Background" Value="White" />
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Background" Value="White" />
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Foreground" Value="White" />
+                    <Setter Property="Background" Value="#3399FF" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Application.Resources>
+</Application>
